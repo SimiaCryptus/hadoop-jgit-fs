@@ -30,23 +30,26 @@ import org.eclipse.jgit.transport.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Map;
 
 public class JGitFileSystem extends org.apache.hadoop.fs.FileSystem implements AutoCloseable {
   protected static final Logger logger = LoggerFactory.getLogger(JGitFileSystem.class);
   
-  public JGitFileSystem(String url) throws IOException, URISyntaxException {
+  public JGitFileSystem(String url, final String branch) throws IOException, URISyntaxException {
     File baseDir = File.createTempFile("hadoop", ".git");
     baseDir.delete();
     baseDir.mkdirs();
     logger.info("Temp Git Dir: " + baseDir.getAbsolutePath());
     final URIish uri = new URIish(url);
-    Repository repo = new RepositoryBuilder().setGitDir(baseDir).build();
-    repo.create(true);
+    logger.info("Git Url: " + uri);
+    Repository repo = new RepositoryBuilder().setWorkTree(baseDir).build();
+    repo.create(false);
     StoredConfig config = repo.getConfig();
     final String name = "origin";
     RemoteConfig remote = new RemoteConfig(config, name);
@@ -60,41 +63,36 @@ public class JGitFileSystem extends org.apache.hadoop.fs.FileSystem implements A
     config.save();
     
     try (Transport transport = Transport.open(repo, remote)) {
+      String username = System.getProperty("git.user");
+      if (null != username) {
+        String password = System.getProperty("git.pass");
+        logger.info(String.format("Login: %s %s", username, password.replaceAll(".", "*")));
+        transport.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password));
+      }
       transport.setCheckFetchedObjects(true);
       transport.setRemoveDeletedRefs(true);
       transport.setDryRun(false);
       transport.setTagOpt(TagOpt.AUTO_FOLLOW);
       transport.setFetchThin(false);
-      
-      final ProgressMonitor monitor = new BatchingProgressMonitor() {
-        @Override
-        protected void onUpdate(final String taskName, final int workCurr) {
-        
-        }
-        
-        @Override
-        protected void onEndTask(final String taskName, final int workCurr) {
-        
-        }
-        
-        @Override
-        protected void onUpdate(final String taskName, final int workCurr, final int workTotal, final int percentDone) {
-          logger.info(String.format("onUpdate %s: %s", taskName, percentDone));
-        }
-        
-        @Override
-        protected void onEndTask(final String taskName, final int workCurr, final int workTotal, final int percentDone) {
-          logger.info(String.format("onEndTask %s: %s", taskName, percentDone));
-        }
-      };
-      FetchResult result = transport.fetch(monitor, Arrays.asList(new RefSpec("master")));
-      result.submoduleResults().forEach((submoduleName, fetchResult) -> {
-        logger.info(String.format("%s: %s", submoduleName, fetchResult));
-      });
-      
+      final ProgressMonitor monitor = new EmptyProgressMonitor() {};
+      FetchResult result = transport.fetch(monitor, Arrays.asList(new RefSpec("refs/heads/" + branch, RefSpec.WildcardMode.REQUIRE_MATCH)));
+      logger.info(String.format("%s: %s", result.getURI(), result.getMessages()));
+      Map<String, FetchResult> fetchResultMap = result.submoduleResults();
+      log("", fetchResultMap);
+    } catch (Throwable e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
     }
     
+    Desktop.getDesktop().open(baseDir);
     
+  }
+  
+  private void log(String indent, final Map<String, FetchResult> fetchResultMap) {
+    fetchResultMap.forEach((submoduleName, fetchResult) -> {
+      logger.info(String.format(indent + "%s: %s", submoduleName, fetchResult.getMessages()));
+      log(indent + "  ", fetchResult.submoduleResults());
+    });
   }
   
   @Override
