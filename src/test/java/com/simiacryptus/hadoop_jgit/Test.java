@@ -28,7 +28,7 @@ public class Test {
   
   public static void main(String[] args) {
     try {
-      logger.info(new JGitFileSystem("git@github.com:SimiaCryptus/MindsEye.git").toString());
+      logger.info(new JGitFileSystem("https://github.com/SimiaCryptus/MindsEye.git", "master").toString());
     } catch (Throwable e) {
       e.printStackTrace();
     }
