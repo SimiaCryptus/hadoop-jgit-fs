@@ -50,7 +50,7 @@ public class GitFileSystem extends ProxyFileSystem {
     URI uri = f.toUri();
     ParsePath parsePath = new ParsePath(uri).invoke();
     try {
-      URI basePath = new URI(String.format("http://%s/%s%s/", uri.getRawAuthority(), parsePath.getRepoPath(), parsePath.getRepoBranch()));
+      URI basePath = new URI(String.format("https://%s/%s%s/", uri.getRawAuthority(), parsePath.getRepoPath(), parsePath.getRepoBranch()));
       return cache.computeIfAbsent(basePath, path -> {
         try {
           return new GitRepoFileSystem(path);

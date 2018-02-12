@@ -61,7 +61,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     logger.info("Git File: " + parsedPath.getFilePath());
     final URIish sourceUrl = new URIish(String.format("%s://%s/%s", url.getScheme(), url.getHost(), parsedPath.getRepoPath()));
     logger.info("Git Url: " + sourceUrl);
-    this.gitDir = new File(dataDirectory, String.format("%s/%s", url.getHost(), parsedPath.getRepoPath()));
+    this.gitDir = new File(dataDirectory, String.format("%s/%s/%s", url.getHost(), parsedPath.getRepoPath(), parsedPath.getRepoBranch()));
     logger.info("Temp Git Dir: " + gitDir.getAbsolutePath());
     this.repository = new RepositoryBuilder().setWorkTree(gitDir).build();
     if (!gitDir.exists()) {
@@ -73,7 +73,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     this.innerFS = new RawLocalFileSystem();
     innerFS.setWorkingDirectory(new Path(gitDir.getAbsolutePath()));
     this.localBase = this.gitDir.toPath().toUri();
-    this.univeralBase = new URI(sourceUrl.toString());
+    this.univeralBase = new URI(sourceUrl.toString()).resolve(parsedPath.getRepoBranch());
     logger.info("Local Base: " + localBase);
     logger.info("Universal Base: " + univeralBase);
   }
