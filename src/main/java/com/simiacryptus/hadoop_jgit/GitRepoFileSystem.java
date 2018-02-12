@@ -51,7 +51,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   private final URI localBase;
   private final URI univeralBase;
   
-  public GitRepoFileSystem(URI url) throws IOException, URISyntaxException {
+  public GitRepoFileSystem(URI url, final GitFileSystem parent) throws IOException, URISyntaxException {
     File dataDirectory = new File(System.getProperty("java.io.tmpdir"), "git");
     dataDirectory.mkdirs();
     logger.info("Git FS: " + url);
@@ -70,12 +70,16 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     }
     this.remoteConfig = getRemoteConfig(sourceUrl, repository.getConfig());
     update();
-    this.innerFS = new RawLocalFileSystem();
-    innerFS.setWorkingDirectory(new Path(gitDir.getAbsolutePath()));
+    statistics = parent.getStats();
     this.localBase = this.gitDir.toPath().toUri();
     this.univeralBase = new URI(sourceUrl.toString()).resolve(parsedPath.getRepoBranch());
     logger.info("Local Base: " + localBase);
     logger.info("Universal Base: " + univeralBase);
+    
+    this.innerFS = new LocalRepoFileSystem();
+    innerFS.setWorkingDirectory(new Path(gitDir.getAbsolutePath()));
+    setConf(parent.getConf());
+    innerFS.setConf(parent.getConf());
   }
   
   @Nonnull
@@ -186,4 +190,9 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return innerFS.getFileStatus(pathFilter(f));
   }
   
+  private class LocalRepoFileSystem extends RawLocalFileSystem {
+    public LocalRepoFileSystem() {
+      statistics = GitRepoFileSystem.this.statistics;
+    }
+  }
 }

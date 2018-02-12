@@ -34,6 +34,11 @@ public class GitFileSystem extends ProxyFileSystem {
   private static final Map<URI, GitRepoFileSystem> cache = new WeakHashMap<>();
   
   public GitFileSystem() {
+    statistics = new Statistics("");
+  }
+  
+  public Statistics getStats() {
+    return statistics;
   }
   
   @Override
@@ -53,7 +58,7 @@ public class GitFileSystem extends ProxyFileSystem {
       URI basePath = new URI(String.format("https://%s/%s%s/", uri.getRawAuthority(), parsePath.getRepoPath(), parsePath.getRepoBranch()));
       return cache.computeIfAbsent(basePath, path -> {
         try {
-          return new GitRepoFileSystem(path);
+          return new GitRepoFileSystem(path, GitFileSystem.this);
         } catch (IOException e) {
           throw new RuntimeException(e);
         } catch (URISyntaxException e) {
