@@ -25,7 +25,6 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
 import java.nio.charset.Charset;
 
 public class Test {
@@ -33,22 +32,14 @@ public class Test {
   
   
   public static void main(String[] args) {
+    String pathString = args.length == 0 ? "git://github.com/SimiaCryptus/hadoop-jgit-fs.git/master/README.md" : args[0];
     try {
-      URI url = new URI("https://github.com/SimiaCryptus/MindsEye.git/master/README.md");
-  
-      String pathString = "git://github.com/SimiaCryptus/MindsEye.git/master/README.md";
       Charset utf8 = Charset.forName("UTF-8");
       GitFileSystem gitFileSystem = new GitFileSystem();
       gitFileSystem.setConf(new Configuration());
       IOUtils.readLines(gitFileSystem.open(new Path(pathString)), utf8).forEach(line -> {
         logger.info(line);
       });
-
-//      GitRepoFileSystem jGitFileSystem = new GitRepoFileSystem(url);
-//      logger.info("Local Path: " + new Path(jGitFileSystem.convertUrl(url)));
-//      Desktop.getDesktop().open(jGitFileSystem.gitDir);
-//
-//      logger.info(jGitFileSystem.toString());
     } catch (Throwable e) {
       e.printStackTrace();
     }
