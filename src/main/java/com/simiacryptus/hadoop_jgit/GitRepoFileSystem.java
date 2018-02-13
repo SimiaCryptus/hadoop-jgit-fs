@@ -107,8 +107,10 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   }
   
   private void update() throws IOException {
-    Collection<Ref> fetch = fetch(getRepository(), getRemoteConfig(), getParsedPath().getRepoBranch());
-    checkout(getRepository(), fetch.stream().filter(x -> x.getName().equals("HEAD")).findAny().get());
+    String branch = getParsedPath().getRepoBranch();
+    Collection<Ref> fetch = fetch(getRepository(), getRemoteConfig(), branch);
+    checkout(getRepository(), fetch.stream().filter(x -> x.getName().equals("refs/heads/" + branch)).findAny()
+      .orElseGet(() -> fetch.stream().filter(x -> x.getName().equals("HEAD")).findAny().get()));
   }
   
   private boolean checkout(final Repository repository, final Ref tagName) throws IOException {
