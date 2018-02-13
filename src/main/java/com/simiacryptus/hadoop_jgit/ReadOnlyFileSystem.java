@@ -26,7 +26,9 @@ import org.apache.hadoop.util.Progressable;
 
 import java.io.IOException;
 
-public abstract class ReadOnlyFileSystem extends org.apache.hadoop.fs.FileSystem implements AutoCloseable {
+public abstract class ReadOnlyFileSystem extends ConfigurableFileSystem {
+  
+  
   @Override
   public FSDataOutputStream create(final Path f, final FsPermission permission, final boolean overwrite, final int bufferSize, final short replication, final long blockSize, final Progressable progress) throws IOException {
     throw new RuntimeException("Read-Only Filesystem");

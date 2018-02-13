@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
+import java.util.concurrent.TimeUnit;
 
 public class Test {
   protected static final Logger logger = LoggerFactory.getLogger(Test.class);
@@ -40,6 +41,7 @@ public class Test {
       IOUtils.readLines(gitFileSystem.open(new Path(pathString)), utf8).forEach(line -> {
         logger.info(line);
       });
+      Thread.sleep(TimeUnit.MINUTES.toMillis(10));
     } catch (Throwable e) {
       e.printStackTrace();
     }

@@ -28,7 +28,7 @@ import org.apache.hadoop.util.Progressable;
 
 import java.io.IOException;
 
-public abstract class ProxyFileSystem extends org.apache.hadoop.fs.FileSystem implements AutoCloseable {
+public abstract class ProxyFileSystem extends ConfigurableFileSystem {
   private Path workingDirectory;
   
   protected abstract GitRepoFileSystem route(Path f);

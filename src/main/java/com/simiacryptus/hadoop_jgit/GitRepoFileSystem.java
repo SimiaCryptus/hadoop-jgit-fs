@@ -40,46 +40,58 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 public class GitRepoFileSystem extends ReadOnlyFileSystem {
-  protected static final Logger logger = LoggerFactory.getLogger(GitRepoFileSystem.class);
-  public final File gitDir;
+  private static final Logger logger = LoggerFactory.getLogger(GitRepoFileSystem.class);
+  private final File gitDir;
   private final Repository repository;
   private final RemoteConfig remoteConfig;
   private final ParsePath parsedPath;
   private final RawLocalFileSystem innerFS;
   private final URI localBase;
   private final URI univeralBase;
+  private final double eagerFetchPeriod;
+  private final double dismountPeriod;
+  private final boolean dismountDelete;
+  private final double lazyFetchPeriod;
+  private long lastTouch = 0;
+  private long lastFetch = 0;
   
   public GitRepoFileSystem(URI url, final GitFileSystem parent) throws IOException, URISyntaxException {
-    File dataDirectory = new File(System.getProperty("java.io.tmpdir"), "git");
-    dataDirectory.mkdirs();
-    logger.info("Git FS: " + url);
-    this.parsedPath = new ParsePath(url).invoke();
-    logger.info("Git Repo: " + parsedPath.getRepoPath());
-    logger.info("Git Branch: " + parsedPath.getRepoBranch());
-    logger.info("Git File: " + parsedPath.getFilePath());
-    final URIish sourceUrl = new URIish(String.format("%s://%s/%s", url.getScheme(), url.getHost(), parsedPath.getRepoPath()));
-    logger.info("Git Url: " + sourceUrl);
-    this.gitDir = new File(dataDirectory, String.format("%s/%s/%s", url.getHost(), parsedPath.getRepoPath(), parsedPath.getRepoBranch()));
-    logger.info("Temp Git Dir: " + gitDir.getAbsolutePath());
-    this.repository = new RepositoryBuilder().setWorkTree(gitDir).build();
-    if (!gitDir.exists()) {
-      if (!gitDir.mkdirs()) { throw new RuntimeException(gitDir.getAbsolutePath()); }
-      repository.create(false);
-    }
-    this.remoteConfig = getRemoteConfig(sourceUrl, repository.getConfig());
-    update();
+    setConf(parent.getConf());
     statistics = parent.getStats();
-    this.localBase = this.gitDir.toPath().toUri();
-    this.univeralBase = new URI(sourceUrl.toString()).resolve(parsedPath.getRepoBranch());
-    logger.info("Local Base: " + localBase);
-    logger.info("Universal Base: " + univeralBase);
+    TimeUnit timeUnit = TimeUnit.SECONDS;
+    this.lazyFetchPeriod = Double.parseDouble(getProperty("git.fetch.lazy", Double.toString(timeUnit.toSeconds(5))));
+    this.eagerFetchPeriod = Double.parseDouble(getProperty("git.fetch.eager", Double.toString(timeUnit.toSeconds(5))));
+    this.dismountPeriod = Double.parseDouble(getProperty("git.dismount.seconds", Double.toString(timeUnit.toSeconds(60))));
+    this.dismountDelete = Boolean.parseBoolean(getProperty("git.dismount.delete", Boolean.toString(false)));
+    File dataDirectory = new File(getProperty("java.io.tmpdir"), "git");
+    dataDirectory.mkdirs();
+    logger.debug("Git FS: " + url);
+    this.parsedPath = new ParsePath(url).invoke();
+    logger.debug("Git Repo: " + getParsedPath().getRepoPath());
+    logger.debug("Git Branch: " + getParsedPath().getRepoBranch());
+    logger.debug("Git File: " + getParsedPath().getFilePath());
+    final URIish sourceUrl = new URIish(String.format("%s://%s/%s", url.getScheme(), url.getHost(), getParsedPath().getRepoPath()));
+    logger.debug("Git Url: " + sourceUrl);
+    this.gitDir = new File(dataDirectory, String.format("%s/%s/%s", url.getHost(), getParsedPath().getRepoPath(), getParsedPath().getRepoBranch()));
+    logger.debug("Temp Git Dir: " + getGitDir().getAbsolutePath());
+    this.repository = new RepositoryBuilder().setWorkTree(getGitDir()).build();
+    if (!getGitDir().exists()) {
+      if (!getGitDir().mkdirs()) { throw new RuntimeException(getGitDir().getAbsolutePath()); }
+      getRepository().create(false);
+    }
+    this.remoteConfig = getRemoteConfig(sourceUrl, getRepository().getConfig());
+    update();
+    this.localBase = this.getGitDir().toPath().toUri();
+    this.univeralBase = new URI(sourceUrl.toString()).resolve(getParsedPath().getRepoBranch());
+    logger.debug("Local Base: " + getLocalBase());
+    logger.debug("Universal Base: " + getUniveralBase());
     
     this.innerFS = new LocalRepoFileSystem();
-    innerFS.setWorkingDirectory(new Path(gitDir.getAbsolutePath()));
-    setConf(parent.getConf());
-    innerFS.setConf(parent.getConf());
+    getInnerFS().setWorkingDirectory(new Path(getGitDir().getAbsolutePath()));
+    getInnerFS().setConf(parent.getConf());
   }
   
   @Nonnull
@@ -89,14 +101,14 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   
   @Nonnull
   public URI convertUrl(final URI path) {
-    URI relativized = localBase.resolve(univeralBase.relativize(path));
-    logger.info(String.format("Converted %s to %s", path, relativized));
+    URI relativized = getLocalBase().resolve(getUniveralBase().relativize(path));
+    logger.debug(String.format("Converted %s to %s", path, relativized));
     return relativized;
   }
   
   private void update() throws IOException {
-    Collection<Ref> fetch = fetch(repository, remoteConfig, parsedPath.getRepoBranch());
-    checkout(repository, fetch.stream().filter(x -> x.getName().equals("HEAD")).findAny().get());
+    Collection<Ref> fetch = fetch(getRepository(), getRemoteConfig(), getParsedPath().getRepoBranch());
+    checkout(getRepository(), fetch.stream().filter(x -> x.getName().equals("HEAD")).findAny().get());
   }
   
   private boolean checkout(final Repository repository, final Ref tagName) throws IOException {
@@ -114,7 +126,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     DirCacheCheckout dirCacheCheckout = new DirCacheCheckout(repository, dirCache, tree);
     dirCacheCheckout.setFailOnConflict(true);
     boolean checkout = dirCacheCheckout.checkout();
-    logger.info(String.format("Checked out %s: %s", tagName.getObjectId(), checkout));
+    logger.debug(String.format("Checked out %s: %s", tagName.getObjectId(), checkout));
     return checkout;
   }
   
@@ -130,9 +142,9 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
       FetchResult result = transport.fetch(monitor, Arrays.asList(
         new RefSpec("refs/heads/" + repoBranch)
       ));
-      logger.info(String.format("%s: %s", result.getURI(), result.getMessages()));
+      logger.debug(String.format("Fetched %s: %s", result.getURI(), result.getMessages()));
       result.getAdvertisedRefs().stream().forEach(ref -> {
-        logger.info(String.format("%s: %s", ref.getName(), ref.getObjectId()));
+        logger.debug(String.format("Remote Ref: %s = %s", ref.getName(), ref.getObjectId()));
       });
       return result.getAdvertisedRefs();
     } catch (Throwable e) {
@@ -142,10 +154,10 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   }
   
   private void configure(final Transport transport) {
-    String username = System.getProperty("git.user");
-    if (null != username) {
-      String password = System.getProperty("git.pass");
-      logger.info(String.format("Login: %s %s", username, password.replaceAll(".", "*")));
+    String username = getProperty("git.user", "");
+    if (!username.isEmpty()) {
+      String password = getProperty("git.pass");
+      logger.debug(String.format("Login: %s %s", username, password.replaceAll(".", "*")));
       transport.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password));
     }
   }
@@ -162,22 +174,22 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   
   @Override
   public URI getUri() {
-    return univeralBase;
+    return getUniveralBase();
   }
   
   @Override
   public FSDataInputStream open(final Path f, final int bufferSize) throws IOException {
-    return innerFS.open(pathFilter(f), bufferSize);
+    return getInnerFS().open(pathFilter(f), bufferSize);
   }
   
   @Override
   public FileStatus[] listStatus(final Path f) throws IOException {
-    return innerFS.listStatus(pathFilter(f));
+    return getInnerFS().listStatus(pathFilter(f));
   }
   
   @Override
   public Path getWorkingDirectory() {
-    return new Path(univeralBase);
+    return new Path(getUniveralBase());
   }
   
   @Override
@@ -187,7 +199,79 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   
   @Override
   public FileStatus getFileStatus(final Path f) throws IOException {
-    return innerFS.getFileStatus(pathFilter(f));
+    return getInnerFS().getFileStatus(pathFilter(f));
+  }
+  
+  public void touch() {
+    this.lastTouch = System.currentTimeMillis();
+    if (secondsSinceFetch() > getLazyFetchPeriod()) fetch();
+  }
+  
+  public void fetch() {
+    fetch(this.getRepository(), this.getRemoteConfig(), getParsedPath().getRepoBranch());
+    this.lastFetch = System.currentTimeMillis();
+  }
+  
+  public double secondsSinceFetch() {
+    final long now = System.currentTimeMillis();
+    return (now - this.getLastFetch()) / 1e3;
+  }
+  
+  public double secondsSinceTouch() {
+    final long now = System.currentTimeMillis();
+    return (now - this.getLastTouch()) / 1e3;
+  }
+  
+  public File getGitDir() {
+    return gitDir;
+  }
+  
+  public Repository getRepository() {
+    return repository;
+  }
+  
+  public RemoteConfig getRemoteConfig() {
+    return remoteConfig;
+  }
+  
+  public ParsePath getParsedPath() {
+    return parsedPath;
+  }
+  
+  public RawLocalFileSystem getInnerFS() {
+    return innerFS;
+  }
+  
+  public URI getLocalBase() {
+    return localBase;
+  }
+  
+  public URI getUniveralBase() {
+    return univeralBase;
+  }
+  
+  public double getEagerFetchPeriod() {
+    return eagerFetchPeriod;
+  }
+  
+  public long getLastTouch() {
+    return lastTouch;
+  }
+  
+  public long getLastFetch() {
+    return lastFetch;
+  }
+  
+  public double getLazyFetchPeriod() {
+    return lazyFetchPeriod;
+  }
+  
+  public double getDismountPeriod() {
+    return dismountPeriod;
+  }
+  
+  public boolean isDismountDelete() {
+    return dismountDelete;
   }
   
   private class LocalRepoFileSystem extends RawLocalFileSystem {
