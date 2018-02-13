@@ -62,11 +62,11 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     setConf(parent.getConf());
     statistics = parent.getStats();
     TimeUnit timeUnit = TimeUnit.SECONDS;
-    this.lazyFetchPeriod = Double.parseDouble(getProperty("git.fetch.lazy", Double.toString(timeUnit.toSeconds(5))));
-    this.eagerFetchPeriod = Double.parseDouble(getProperty("git.fetch.eager", Double.toString(timeUnit.toSeconds(5))));
-    this.dismountPeriod = Double.parseDouble(getProperty("git.dismount.seconds", Double.toString(timeUnit.toSeconds(60))));
-    this.dismountDelete = Boolean.parseBoolean(getProperty("git.dismount.delete", Boolean.toString(false)));
-    File dataDirectory = new File(getProperty("java.io.tmpdir"), "git");
+    this.lazyFetchPeriod = Double.parseDouble(getProperty("fs.jgit.fetch.lazy", Double.toString(timeUnit.toSeconds(5))));
+    this.eagerFetchPeriod = Double.parseDouble(getProperty("fs.jgit.fetch.eager", Double.toString(timeUnit.toSeconds(5))));
+    this.dismountPeriod = Double.parseDouble(getProperty("fs.jgit.dismount.seconds", Double.toString(timeUnit.toSeconds(60))));
+    this.dismountDelete = Boolean.parseBoolean(getProperty("fs.jgit.dismount.delete", Boolean.toString(false)));
+    File dataDirectory = new File(getProperty("fs.jgit.datadir", getProperty("java.io.tmpdir")), "git");
     dataDirectory.mkdirs();
     logger.debug("Git FS: " + url);
     this.parsedPath = new ParsePath(url).invoke();
@@ -154,9 +154,9 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   }
   
   private void configure(final Transport transport) {
-    String username = getProperty("git.user", "");
+    String username = getProperty("fs.jgit.auth.user", "");
     if (!username.isEmpty()) {
-      String password = getProperty("git.pass");
+      String password = getProperty("fs.jgit.auth.pass");
       logger.debug(String.format("Login: %s %s", username, password.replaceAll(".", "*")));
       transport.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password));
     }
