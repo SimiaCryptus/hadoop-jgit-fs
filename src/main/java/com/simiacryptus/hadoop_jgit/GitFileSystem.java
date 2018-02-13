@@ -21,6 +21,8 @@ package com.simiacryptus.hadoop_jgit;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.hadoop.fs.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -33,6 +35,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class GitFileSystem extends ProxyFileSystem {
+  private static final Logger logger = LoggerFactory.getLogger(GitFileSystem.class);
   private static final Map<URI, GitRepoFileSystem> cache = new HashMap<>();
   private static final Map<URI, ScheduledFuture<?>> pollingTasks = new HashMap<>();
   private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
@@ -65,8 +68,12 @@ public class GitFileSystem extends ProxyFileSystem {
           GitRepoFileSystem gitRepoFileSystem = new GitRepoFileSystem(path, GitFileSystem.this);
           gitRepoFileSystem.touch();
           pollingTasks.put(basePath, scheduledExecutorService.scheduleAtFixedRate(() -> {
-            if (gitRepoFileSystem.secondsSinceFetch() > gitRepoFileSystem.getEagerFetchPeriod()) {
-              gitRepoFileSystem.fetch();
+            if (gitRepoFileSystem.secondsSinceFetch() > gitRepoFileSystem.getEagerPullPeriod()) {
+              try {
+                gitRepoFileSystem.pull();
+              } catch (IOException e) {
+                logger.warn("Error pulling update for " + basePath, e);
+              }
             }
             else if (gitRepoFileSystem.secondsSinceTouch() > gitRepoFileSystem.getDismountPeriod()) {
               if (gitRepoFileSystem.isDismountDelete()) {
