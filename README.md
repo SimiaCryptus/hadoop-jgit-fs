@@ -49,8 +49,8 @@ Tunable parameters
 These may or may not improve performance. The defaults were set without 
 much testing.
 
-- **fs.jgit.fetch.lazy** - Frequency (in seconds) of foreground fetches 
-- **fs.jgit.fetch.eager** - Frequency (in seconds) of background fetches
+- **fs.jgit.pull.lazy** - Frequency (in seconds) of foreground fetches 
+- **fs.jgit.pull.eager** - Frequency (in seconds) of background fetches
 - **fs.jgit.dismount.seconds** - Idle time (in seconds) to dismount repo driver
 - **fs.jgit.dismount.delete** - If true, files will be removed when repo driver dismounts
 - **fs.jgit.datadir** - Data directory to use for local storage

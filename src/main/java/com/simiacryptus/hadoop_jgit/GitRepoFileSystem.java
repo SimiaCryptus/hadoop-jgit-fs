@@ -51,10 +51,10 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   private final RawLocalFileSystem innerFS;
   private final URI localBase;
   private final URI univeralBase;
-  private final double eagerFetchPeriod;
+  private final double eagerPullPeriod;
   private final double dismountPeriod;
   private final boolean dismountDelete;
-  private final double lazyFetchPeriod;
+  private final double lazyPullPeriod;
   private long lastTouch = 0;
   private long lastFetch = 0;
   
@@ -62,8 +62,8 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     setConf(parent.getConf());
     statistics = parent.getStats();
     TimeUnit timeUnit = TimeUnit.SECONDS;
-    this.lazyFetchPeriod = Double.parseDouble(getProperty("fs.jgit.fetch.lazy", Double.toString(timeUnit.toSeconds(5))));
-    this.eagerFetchPeriod = Double.parseDouble(getProperty("fs.jgit.fetch.eager", Double.toString(timeUnit.toSeconds(5))));
+    this.lazyPullPeriod = Double.parseDouble(getProperty("fs.jgit.pull.lazy", Double.toString(timeUnit.toSeconds(5))));
+    this.eagerPullPeriod = Double.parseDouble(getProperty("fs.jgit.pull.eager", Double.toString(timeUnit.toSeconds(5))));
     this.dismountPeriod = Double.parseDouble(getProperty("fs.jgit.dismount.seconds", Double.toString(timeUnit.toSeconds(60))));
     this.dismountDelete = Boolean.parseBoolean(getProperty("fs.jgit.dismount.delete", Boolean.toString(false)));
     File dataDirectory = new File(getProperty("fs.jgit.datadir", getProperty("java.io.tmpdir")), "git");
@@ -83,7 +83,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
       getRepository().create(false);
     }
     this.remoteConfig = getRemoteConfig(sourceUrl, getRepository().getConfig());
-    update();
+    pull();
     this.localBase = this.getGitDir().toPath().toUri();
     this.univeralBase = new URI(sourceUrl.toString()).resolve(getParsedPath().getRepoBranch());
     logger.debug("Local Base: " + getLocalBase());
@@ -106,7 +106,8 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return relativized;
   }
   
-  private void update() throws IOException {
+  public void pull() throws IOException {
+    this.lastFetch = System.currentTimeMillis();
     String branch = getParsedPath().getRepoBranch();
     Collection<Ref> fetch = fetch(getRepository(), getRemoteConfig(), branch);
     checkout(getRepository(), fetch.stream().filter(x -> x.getName().equals("refs/heads/" + branch)).findAny()
@@ -206,12 +207,11 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   
   public void touch() {
     this.lastTouch = System.currentTimeMillis();
-    if (secondsSinceFetch() > getLazyFetchPeriod()) fetch();
-  }
-  
-  public void fetch() {
-    fetch(this.getRepository(), this.getRemoteConfig(), getParsedPath().getRepoBranch());
-    this.lastFetch = System.currentTimeMillis();
+    if (secondsSinceFetch() > getLazyPullPeriod()) try {
+      pull();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
   
   public double secondsSinceFetch() {
@@ -252,8 +252,8 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return univeralBase;
   }
   
-  public double getEagerFetchPeriod() {
-    return eagerFetchPeriod;
+  public double getEagerPullPeriod() {
+    return eagerPullPeriod;
   }
   
   public long getLastTouch() {
@@ -264,8 +264,8 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return lastFetch;
   }
   
-  public double getLazyFetchPeriod() {
-    return lazyFetchPeriod;
+  public double getLazyPullPeriod() {
+    return lazyPullPeriod;
   }
   
   public double getDismountPeriod() {
