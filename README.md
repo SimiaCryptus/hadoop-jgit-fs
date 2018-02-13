@@ -17,7 +17,7 @@ Build Instructions
 Build using maven:
 
 ```shell
-$ mvn package -DskipTests=true
+$ mvn package
 ```
 
 Copy jar and various dependencies to your hadoop libs dir 
@@ -40,7 +40,7 @@ Add the following keys to your core-site.xml file:
 You should now be able to run commands:
 
 ```shell
-$ hadoop fs -ls jgit://bucketname/foo
+$ hadoop fs -ls git://github.com/SimiaCryptus/hadoop-jgit-fs.git/master/
 ```
 
 Tunable parameters

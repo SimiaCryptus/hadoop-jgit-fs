@@ -33,7 +33,7 @@ public class Test {
   
   
   public static void main(String[] args) {
-    String pathString = args.length == 0 ? "git://github.com/SimiaCryptus/hadoop-jgit-fs.git/master/README.md" : args[0];
+    String pathString = args.length == 0 ? "git://github.com/SimiaCryptus/hadoop-jgit-fs.git/acharneski-patch-1/README.md" : args[0];
     try {
       Charset utf8 = Charset.forName("UTF-8");
       GitFileSystem gitFileSystem = new GitFileSystem();
