@@ -9,7 +9,18 @@ Features:
 - Clones each given repo+branch once and uses a background thread to fetch updates
 - Proxies through to a read-only local filesystem driver for high speed
 - Default packaging uses an uber-jar for easy deployment
+- Download prebuilt jar from [Maven Central](http://central.maven.org/maven2/com/simiacryptus/hadoop-jgit-fs/0.1/hadoop-jgit-fs-0.1.jar)
 
+Import from Maven Central
+------------------
+
+```xml
+<dependency>
+    <groupId>com.simiacryptus</groupId>
+    <artifactId>hadoop-jgit-fs</artifactId>
+    <version>0.1</version>
+</dependency>
+```
 
 Build Instructions
 ------------------
