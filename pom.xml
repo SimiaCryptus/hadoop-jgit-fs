@@ -115,7 +115,11 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-codecommit</artifactId>
+            <version>1.11.276</version>
+        </dependency>
     </dependencies>
 
     <build>
