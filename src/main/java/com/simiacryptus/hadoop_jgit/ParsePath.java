@@ -35,7 +35,7 @@ class ParsePath {
     this.url = url;
   }
   
-  public String getRepoPath() {
+  public CharSequence getRepoPath() {
     return repoPath;
   }
   
@@ -43,14 +43,14 @@ class ParsePath {
     return repoBranch;
   }
   
-  public String getFilePath() {
+  public CharSequence getFilePath() {
     return filePath;
   }
   
   public ParsePath invoke() {
     assert null != deconstructionPattern;
     assert null != url;
-    String path = url.getPath();
+    CharSequence path = url.getPath();
     Matcher matcher = null == path ? null : deconstructionPattern.matcher(path);
     if (null != matcher && matcher.matches()) {
       repoPath = matcher.group(1);

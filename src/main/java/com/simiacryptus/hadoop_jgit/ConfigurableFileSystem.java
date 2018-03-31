@@ -28,13 +28,13 @@ public abstract class ConfigurableFileSystem extends org.apache.hadoop.fs.FileSy
     });
   }
   
-  protected String getProperty(final String key, String defaultValue) {
+  protected String getProperty(final String key, CharSequence defaultValue) {
     return getProperty(key, () -> defaultValue);
   }
   
-  protected String getProperty(final String key, Supplier<String> defaultValue) {
-    String hadoopValue = getConf().get(key);
-    String javaValue = System.getProperty(key);
+  protected String getProperty(final String key, Supplier<CharSequence> defaultValue) {
+    CharSequence hadoopValue = getConf().get(key);
+    CharSequence javaValue = System.getProperty(key);
     if (null == hadoopValue && null == javaValue) return defaultValue.get();
     if (null != hadoopValue && null != javaValue && !javaValue.equals(hadoopValue))
       throw new RuntimeException("Conflicting configs for " + key);

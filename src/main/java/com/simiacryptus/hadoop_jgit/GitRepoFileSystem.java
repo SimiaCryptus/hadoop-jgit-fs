@@ -25,11 +25,23 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RawLocalFileSystem;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheCheckout;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.EmptyProgressMonitor;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ProgressMonitor;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryBuilder;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.transport.TagOpt;
+import org.eclipse.jgit.transport.Transport;
+import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,7 +120,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   
   public void pull() throws IOException {
     this.lastFetch = System.currentTimeMillis();
-    String branch = getParsedPath().getRepoBranch();
+    CharSequence branch = getParsedPath().getRepoBranch();
     Collection<Ref> fetch = fetch(getRepository(), getRemoteConfig(), branch);
     checkout(getRepository(), fetch.stream().filter(x -> x.getName().equals("refs/heads/" + branch)).findAny()
       .orElseGet(() -> fetch.stream().filter(x -> x.getName().equals("HEAD")).findAny().get()));
@@ -133,7 +145,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return checkout;
   }
   
-  private Collection<Ref> fetch(final Repository repository, final RemoteConfig remoteConfig, final String repoBranch) {
+  private Collection<Ref> fetch(final Repository repository, final RemoteConfig remoteConfig, final CharSequence repoBranch) {
     try (Transport transport = Transport.open(repository, remoteConfig)) {
       configure(transport);
       transport.setCheckFetchedObjects(false);
