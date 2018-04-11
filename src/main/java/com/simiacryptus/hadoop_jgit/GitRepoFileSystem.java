@@ -74,11 +74,11 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     setConf(parent.getConf());
     statistics = parent.getStats();
     TimeUnit timeUnit = TimeUnit.SECONDS;
-    this.lazyPullPeriod = Double.parseDouble(getProperty("fs.jgit.pull.lazy", Double.toString(timeUnit.toSeconds(5))));
-    this.eagerPullPeriod = Double.parseDouble(getProperty("fs.jgit.pull.eager", Double.toString(timeUnit.toSeconds(5))));
-    this.dismountPeriod = Double.parseDouble(getProperty("fs.jgit.dismount.seconds", Double.toString(timeUnit.toSeconds(60))));
-    this.dismountDelete = Boolean.parseBoolean(getProperty("fs.jgit.dismount.delete", Boolean.toString(false)));
-    File dataDirectory = new File(getProperty("fs.jgit.datadir", getProperty("java.io.tmpdir")), "git");
+    this.lazyPullPeriod = Double.parseDouble(getProperty("fs.jgit.pull.lazy", Double.toString(timeUnit.toSeconds(5))).toString());
+    this.eagerPullPeriod = Double.parseDouble(getProperty("fs.jgit.pull.eager", Double.toString(timeUnit.toSeconds(5))).toString());
+    this.dismountPeriod = Double.parseDouble(getProperty("fs.jgit.dismount.seconds", Double.toString(timeUnit.toSeconds(60))).toString());
+    this.dismountDelete = Boolean.parseBoolean(getProperty("fs.jgit.dismount.delete", Boolean.toString(false)).toString());
+    File dataDirectory = new File(getProperty("fs.jgit.datadir", getProperty("java.io.tmpdir")).toString(), "git");
     dataDirectory.mkdirs();
     logger.debug("Git FS: " + url);
     this.parsedPath = new ParsePath(url).invoke();
@@ -169,9 +169,9 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   }
   
   private void configure(final Transport transport) {
-    String username = getProperty("fs.jgit.auth.user", "");
+    String username = getProperty("fs.jgit.auth.user", "").toString();
     if (!username.isEmpty()) {
-      String password = getProperty("fs.jgit.auth.pass");
+      String password = getProperty("fs.jgit.auth.pass").toString();
       logger.debug(String.format("Login: %s %s", username, password.replaceAll(".", "*")));
       transport.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password));
     }
