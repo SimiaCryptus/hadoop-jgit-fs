@@ -22,17 +22,17 @@ package com.simiacryptus.hadoop_jgit;
 import java.util.function.Supplier;
 
 public abstract class ConfigurableFileSystem extends org.apache.hadoop.fs.FileSystem implements AutoCloseable {
-  protected String getProperty(final String key) {
+  protected CharSequence getProperty(final String key) {
     return getProperty(key, () -> {
       throw new RuntimeException("No config found for " + key);
     });
   }
   
-  protected String getProperty(final String key, CharSequence defaultValue) {
+  protected CharSequence getProperty(final String key, CharSequence defaultValue) {
     return getProperty(key, () -> defaultValue);
   }
   
-  protected String getProperty(final String key, Supplier<CharSequence> defaultValue) {
+  protected CharSequence getProperty(final String key, Supplier<CharSequence> defaultValue) {
     CharSequence hadoopValue = getConf().get(key);
     CharSequence javaValue = System.getProperty(key);
     if (null == hadoopValue && null == javaValue) return defaultValue.get();
