@@ -36,8 +36,8 @@ import java.util.concurrent.TimeUnit;
 
 public class GitFileSystem extends ProxyFileSystem {
   private static final Logger logger = LoggerFactory.getLogger(GitFileSystem.class);
-  private static final Map<URI, GitRepoFileSystem> cache = new HashMap<>();
-  private static final Map<URI, ScheduledFuture<?>> pollingTasks = new HashMap<>();
+  private static final Map<String, GitRepoFileSystem> cache = new HashMap<>();
+  private static final Map<String, ScheduledFuture<?>> pollingTasks = new HashMap<>();
   private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
   
   public GitFileSystem() {
@@ -60,39 +60,36 @@ public class GitFileSystem extends ProxyFileSystem {
   @Override
   protected GitRepoFileSystem route(final Path f) {
     URI uri = f.toUri();
-    ParsePath parsePath = new ParsePath(uri).invoke();
-    try {
-      URI basePath = new URI(String.format("https://%s/%s%s/", uri.getRawAuthority(), parsePath.getRepoPath(), parsePath.getRepoBranch()));
-      return cache.computeIfAbsent(basePath, path -> {
-        try {
-          GitRepoFileSystem gitRepoFileSystem = new GitRepoFileSystem(path, GitFileSystem.this);
-          gitRepoFileSystem.touch();
-          pollingTasks.put(basePath, scheduledExecutorService.scheduleAtFixedRate(() -> {
-            if (gitRepoFileSystem.secondsSinceFetch() > gitRepoFileSystem.getEagerPullPeriod()) {
-              try {
-                gitRepoFileSystem.pull();
-              } catch (IOException e) {
-                logger.warn("Error pulling update for " + basePath, e);
-              }
+    ParsePath parsePath = new ParsePath(f.toString()).invoke();
+    String basePath = String.format("https://%s/%s%s/", uri.getRawAuthority(), parsePath.getRepoPath(), parsePath.getRepoBranch());
+//      String basePath = String.format("git@%s:%s%s/", uri.getRawAuthority(), parsePath.getRepoPath(), parsePath.getRepoBranch());
+    return cache.computeIfAbsent(basePath, path -> {
+      try {
+        GitRepoFileSystem gitRepoFileSystem = new GitRepoFileSystem(path, GitFileSystem.this);
+        gitRepoFileSystem.touch();
+        pollingTasks.put(basePath, scheduledExecutorService.scheduleAtFixedRate(() -> {
+          if (gitRepoFileSystem.secondsSinceFetch() > gitRepoFileSystem.getEagerPullPeriod()) {
+            try {
+              gitRepoFileSystem.pull();
+            } catch (IOException e) {
+              logger.warn("Error pulling update for " + basePath, e);
             }
-            else if (gitRepoFileSystem.secondsSinceTouch() > gitRepoFileSystem.getDismountPeriod()) {
-              if (gitRepoFileSystem.isDismountDelete()) {
-                gitRepoFileSystem.getGitDir().delete();
-              }
-              cache.remove(basePath);
-              pollingTasks.remove(basePath).cancel(false);
+          }
+          else if (gitRepoFileSystem.secondsSinceTouch() > gitRepoFileSystem.getDismountPeriod()) {
+            if (gitRepoFileSystem.isDismountDelete()) {
+              gitRepoFileSystem.getGitDir().delete();
             }
-          }, 1, 1, TimeUnit.SECONDS));
-          return gitRepoFileSystem;
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        } catch (URISyntaxException e) {
-          throw new RuntimeException(e);
-        }
-      });
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
+            cache.remove(basePath);
+            pollingTasks.remove(basePath).cancel(false);
+          }
+        }, 1, 1, TimeUnit.SECONDS));
+        return gitRepoFileSystem;
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      } catch (URISyntaxException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
   
   @Override

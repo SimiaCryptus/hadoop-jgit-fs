@@ -70,7 +70,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   private long lastTouch = 0;
   private long lastFetch = 0;
   
-  public GitRepoFileSystem(URI url, final GitFileSystem parent) throws IOException, URISyntaxException {
+  public GitRepoFileSystem(String url, final GitFileSystem parent) throws IOException, URISyntaxException {
     setConf(parent.getConf());
     statistics = parent.getStats();
     TimeUnit timeUnit = TimeUnit.SECONDS;
@@ -85,9 +85,10 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     logger.debug("Git Repo: " + getParsedPath().getRepoPath());
     logger.debug("Git Branch: " + getParsedPath().getRepoBranch());
     logger.debug("Git File: " + getParsedPath().getFilePath());
-    final URIish sourceUrl = new URIish(String.format("%s://%s/%s", url.getScheme(), url.getHost(), getParsedPath().getRepoPath()));
+    URIish parsedUrl = new URIish(url);
+    final URIish sourceUrl = new URIish(String.format("%s://%s/%s", parsedUrl.getScheme(), parsedUrl.getHost(), getParsedPath().getRepoPath()));
     logger.debug("Git Url: " + sourceUrl);
-    this.gitDir = new File(dataDirectory, String.format("%s/%s/%s", url.getHost(), getParsedPath().getRepoPath(), getParsedPath().getRepoBranch()));
+    this.gitDir = new File(dataDirectory, String.format("%s/%s/%s", parsedUrl.getHost(), getParsedPath().getRepoPath(), getParsedPath().getRepoBranch()));
     logger.debug("Temp Git Dir: " + getGitDir().getAbsolutePath());
     this.repository = new RepositoryBuilder().setWorkTree(getGitDir()).build();
     if (!getGitDir().exists()) {
@@ -97,9 +98,9 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     this.remoteConfig = getRemoteConfig(sourceUrl, getRepository().getConfig());
     pull();
     this.localBase = this.getGitDir().toPath().toUri();
-    this.univeralBase = new URI(sourceUrl.toString()).resolve(getParsedPath().getRepoBranch());
-    logger.debug("Local Base: " + getLocalBase());
-    logger.debug("Universal Base: " + getUniveralBase());
+    this.univeralBase = new URI(sourceUrl.toString()).resolve(getParsedPath().getRepoBranch() + "/");
+    logger.debug("Local Base: " + localBase());
+    logger.debug("Universal Base: " + gitBase());
     
     this.innerFS = new LocalRepoFileSystem();
     getInnerFS().setWorkingDirectory(new Path(getGitDir().getAbsolutePath()));
@@ -107,13 +108,34 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   }
   
   @Nonnull
-  public Path pathFilter(final Path path) {
-    return new Path(convertUrl(path.toUri()));
+  public Path toLocalPath(final Path path) {
+    if (null == path) return null;
+    return new Path(toLocalUrl(path.toUri()));
   }
   
   @Nonnull
-  public URI convertUrl(final URI path) {
-    URI relativized = getLocalBase().resolve(getUniveralBase().relativize(path));
+  public Path toGitPath(final Path path) {
+    if (null == path) return null;
+    URI uri = toGitUrl(path.toUri());
+    try {
+      return new Path(new URI(uri.toString().replaceAll("^https?", "git")));
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  
+  @Nonnull
+  public URI toLocalUrl(final URI path) {
+    if (null == path) return null;
+    URI relativized = localBase().resolve(gitBase().relativize(path));
+    logger.debug(String.format("Converted %s to %s", path, relativized));
+    return relativized;
+  }
+  
+  @Nonnull
+  public URI toGitUrl(final URI path) {
+    if (null == path) return null;
+    URI relativized = gitBase().resolve(localBase().relativize(path));
     logger.debug(String.format("Converted %s to %s", path, relativized));
     return relativized;
   }
@@ -189,22 +211,32 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   
   @Override
   public URI getUri() {
-    return getUniveralBase();
+    return gitBase();
   }
   
   @Override
   public FSDataInputStream open(final Path f, final int bufferSize) throws IOException {
-    return getInnerFS().open(pathFilter(f), bufferSize);
+    return getInnerFS().open(toLocalPath(f), bufferSize);
   }
   
   @Override
   public FileStatus[] listStatus(final Path f) throws IOException {
-    return getInnerFS().listStatus(pathFilter(f));
+    return Arrays.stream(getInnerFS().listStatus(toLocalPath(f))).map(this::filter).toArray(i -> new FileStatus[i]);
+  }
+  
+  protected FileStatus filter(final FileStatus fileStatus) {
+    FileStatus newObj = new FileStatus();
+    newObj.setPath(toGitPath(fileStatus.getPath()));
+    try {
+      newObj.setSymlink(toGitPath(fileStatus.getSymlink()));
+    } catch (IOException e) {
+    }
+    return newObj;
   }
   
   @Override
   public Path getWorkingDirectory() {
-    return new Path(getUniveralBase());
+    return new Path(gitBase());
   }
   
   @Override
@@ -214,7 +246,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   
   @Override
   public FileStatus getFileStatus(final Path f) throws IOException {
-    return getInnerFS().getFileStatus(pathFilter(f));
+    return getInnerFS().getFileStatus(toLocalPath(f));
   }
   
   public void touch() {
@@ -256,11 +288,11 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return innerFS;
   }
   
-  public URI getLocalBase() {
+  public URI localBase() {
     return localBase;
   }
   
-  public URI getUniveralBase() {
+  public URI gitBase() {
     return univeralBase;
   }
   
