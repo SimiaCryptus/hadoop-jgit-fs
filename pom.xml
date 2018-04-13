@@ -29,7 +29,7 @@
     </parent>
 
     <artifactId>hadoop-jgit-fs</artifactId>
-    <version>0.1</version>
+    <version>1.4.8</version>
     <description>A Hadoop filesystem driver for Git</description>
 
     <properties>

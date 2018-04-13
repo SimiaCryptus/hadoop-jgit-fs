@@ -19,18 +19,20 @@
 
 package com.simiacryptus.hadoop_jgit;
 
-import java.net.URI;
+import org.eclipse.jgit.transport.URIish;
+
+import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class ParsePath {
-  private static final Pattern deconstructionPattern = Pattern.compile("/(.*\\.git/)([^/]*)/?(.*)");
-  private final URI url;
+  private static final Pattern gitRegex = Pattern.compile("/(.*\\.git/)([^/]*)/?(.*)");
+  private final String url;
   private String repoPath;
   private String repoBranch;
   private String filePath;
   
-  public ParsePath(final URI url) {
+  public ParsePath(final String url) {
     if (null == url) throw new IllegalArgumentException();
     this.url = url;
   }
@@ -48,10 +50,16 @@ class ParsePath {
   }
   
   public ParsePath invoke() {
-    assert null != deconstructionPattern;
+    assert null != gitRegex;
     assert null != url;
-    CharSequence path = url.getPath();
-    Matcher matcher = null == path ? null : deconstructionPattern.matcher(path);
+  
+    CharSequence path;
+    try {
+      path = new URIish(url).getPath();
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+    Matcher matcher = null == path ? null : gitRegex.matcher(path);
     if (null != matcher && matcher.matches()) {
       repoPath = matcher.group(1);
       repoBranch = matcher.group(2);
