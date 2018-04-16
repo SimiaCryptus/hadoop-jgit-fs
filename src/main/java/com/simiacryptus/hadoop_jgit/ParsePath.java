@@ -25,6 +25,9 @@ import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * The type Parse path.
+ */
 class ParsePath {
   private static final Pattern gitRegex = Pattern.compile("/(.*\\.git/)([^/]*)/?(.*)");
   private final String url;
@@ -32,27 +35,52 @@ class ParsePath {
   private String repoBranch;
   private String filePath;
   
+  /**
+   * Instantiates a new Parse path.
+   *
+   * @param url the url
+   */
   public ParsePath(final String url) {
     if (null == url) throw new IllegalArgumentException();
     this.url = url;
   }
   
+  /**
+   * Gets repo path.
+   *
+   * @return the repo path
+   */
   public CharSequence getRepoPath() {
     return repoPath;
   }
   
+  /**
+   * Gets repo branch.
+   *
+   * @return the repo branch
+   */
   public String getRepoBranch() {
     return repoBranch;
   }
   
+  /**
+   * Gets file path.
+   *
+   * @return the file path
+   */
   public CharSequence getFilePath() {
     return filePath;
   }
   
+  /**
+   * Invoke parse path.
+   *
+   * @return the parse path
+   */
   public ParsePath invoke() {
     assert null != gitRegex;
     assert null != url;
-  
+    
     CharSequence path;
     try {
       path = new URIish(url).getPath();

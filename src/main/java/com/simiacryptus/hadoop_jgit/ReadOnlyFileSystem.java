@@ -24,33 +24,34 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
-import java.io.IOException;
-
+/**
+ * The type Read only file system.
+ */
 public abstract class ReadOnlyFileSystem extends ConfigurableFileSystem {
   
   
   @Override
-  public FSDataOutputStream create(final Path f, final FsPermission permission, final boolean overwrite, final int bufferSize, final short replication, final long blockSize, final Progressable progress) throws IOException {
+  public FSDataOutputStream create(final Path f, final FsPermission permission, final boolean overwrite, final int bufferSize, final short replication, final long blockSize, final Progressable progress) {
     throw new RuntimeException("Read-Only Filesystem");
   }
   
   @Override
-  public FSDataOutputStream append(final Path f, final int bufferSize, final Progressable progress) throws IOException {
+  public FSDataOutputStream append(final Path f, final int bufferSize, final Progressable progress) {
     throw new RuntimeException("Read-Only Filesystem");
   }
   
   @Override
-  public boolean rename(final Path src, final Path dst) throws IOException {
+  public boolean rename(final Path src, final Path dst) {
     throw new RuntimeException("Read-Only Filesystem");
   }
   
   @Override
-  public boolean delete(final Path f, final boolean recursive) throws IOException {
+  public boolean delete(final Path f, final boolean recursive) {
     throw new RuntimeException("Read-Only Filesystem");
   }
   
   @Override
-  public boolean mkdirs(final Path f, final FsPermission permission) throws IOException {
+  public boolean mkdirs(final Path f, final FsPermission permission) {
     throw new RuntimeException("Read-Only Filesystem");
   }
 }

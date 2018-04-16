@@ -28,10 +28,21 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The type Test.
+ */
 public class Test {
+  /**
+   * The constant logger.
+   */
   protected static final Logger logger = LoggerFactory.getLogger(Test.class);
   
   
+  /**
+   * The entry point of application.
+   *
+   * @param args the input arguments
+   */
   public static void main(String[] args) {
     //System.setProperty("fs.jgit.auth.user")
     String pathString = args.length == 0 ? "https://git-codecommit.us-west-2.amazonaws.com/v1/repos/simiacryptus-test:/master/README.md" : args[0];
