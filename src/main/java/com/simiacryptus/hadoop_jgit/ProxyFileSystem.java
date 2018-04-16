@@ -28,11 +28,26 @@ import org.apache.hadoop.util.Progressable;
 
 import java.io.IOException;
 
+/**
+ * The type Proxy file system.
+ */
 public abstract class ProxyFileSystem extends ConfigurableFileSystem {
   private Path workingDirectory;
   
+  /**
+   * Route git repo file system.
+   *
+   * @param f the f
+   * @return the git repo file system
+   */
   protected abstract GitRepoFileSystem route(Path f);
   
+  /**
+   * Filter path.
+   *
+   * @param f the f
+   * @return the path
+   */
   protected abstract Path filter(Path f);
   
   @Override
