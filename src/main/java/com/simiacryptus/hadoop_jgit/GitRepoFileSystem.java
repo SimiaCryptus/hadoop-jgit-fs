@@ -225,7 +225,6 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
       });
       return result.getAdvertisedRefs();
     } catch (Throwable e) {
-      e.printStackTrace();
       throw new RuntimeException(e);
     }
   }
