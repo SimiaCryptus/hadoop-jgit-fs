@@ -76,27 +76,36 @@ public abstract class ProxyFileSystem extends ConfigurableFileSystem {
   }
   
   @Override
-  public FSDataOutputStream create(final Path f, final FsPermission permission, final boolean overwrite, final int bufferSize, final short replication, final long blockSize, final Progressable progress) throws IOException {
+  public FSDataOutputStream create(
+    final Path f,
+    final FsPermission permission,
+    final boolean overwrite,
+    final int bufferSize,
+    final short replication,
+    final long blockSize,
+    final Progressable progress
+  )
+  {
     return route(f).create(filter(f), permission, overwrite, bufferSize, replication, blockSize, progress);
   }
   
   @Override
-  public FSDataOutputStream append(final Path f, final int bufferSize, final Progressable progress) throws IOException {
+  public FSDataOutputStream append(final Path f, final int bufferSize, final Progressable progress) {
     return route(f).append(filter(f), bufferSize, progress);
   }
   
   @Override
-  public boolean rename(final Path src, final Path dst) throws IOException {
+  public boolean rename(final Path src, final Path dst) {
     return route(src).rename(filter(src), dst);
   }
   
   @Override
-  public boolean delete(final Path f, final boolean recursive) throws IOException {
+  public boolean delete(final Path f, final boolean recursive) {
     return route(f).delete(filter(f), recursive);
   }
   
   @Override
-  public boolean mkdirs(final Path f, final FsPermission permission) throws IOException {
+  public boolean mkdirs(final Path f, final FsPermission permission) {
     return route(f).mkdirs(filter(f), permission);
   }
 }
