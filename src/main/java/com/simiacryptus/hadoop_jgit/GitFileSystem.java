@@ -42,14 +42,14 @@ public class GitFileSystem extends ProxyFileSystem {
   private static final Map<String, GitRepoFileSystem> cache = new HashMap<>();
   private static final Map<String, ScheduledFuture<?>> pollingTasks = new HashMap<>();
   private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
-  
+
   /**
    * Instantiates a new Git file system.
    */
   public GitFileSystem() {
     statistics = new Statistics("");
   }
-  
+
   /**
    * Gets stats.
    *
@@ -58,7 +58,7 @@ public class GitFileSystem extends ProxyFileSystem {
   public Statistics getStats() {
     return statistics;
   }
-  
+
   @Override
   public URI getUri() {
     try {
@@ -67,7 +67,7 @@ public class GitFileSystem extends ProxyFileSystem {
       throw new RuntimeException(e);
     }
   }
-  
+
   @Override
   protected GitRepoFileSystem route(final Path f) {
     URI uri = f.toUri();
@@ -85,8 +85,7 @@ public class GitFileSystem extends ProxyFileSystem {
             } catch (IOException e) {
               logger.warn("Error pulling update for " + basePath, e);
             }
-          }
-          else if (gitRepoFileSystem.secondsSinceTouch() > gitRepoFileSystem.getDismountPeriod()) {
+          } else if (gitRepoFileSystem.secondsSinceTouch() > gitRepoFileSystem.getDismountPeriod()) {
             if (gitRepoFileSystem.isDismountDelete()) {
               gitRepoFileSystem.getGitDir().delete();
             }
@@ -102,12 +101,12 @@ public class GitFileSystem extends ProxyFileSystem {
       }
     });
   }
-  
+
   @Override
   protected Path filter(final Path f) {
     URI uri = f.toUri();
     return new Path("https", uri.getRawAuthority(), uri.getRawPath());
   }
-  
-  
+
+
 }

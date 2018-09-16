@@ -36,8 +36,8 @@ public class Test {
    * The constant logger.
    */
   protected static final Logger logger = LoggerFactory.getLogger(Test.class);
-  
-  
+
+
   /**
    * The entry point of application.
    *

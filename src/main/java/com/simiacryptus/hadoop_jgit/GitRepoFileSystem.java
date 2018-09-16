@@ -25,23 +25,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RawLocalFileSystem;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheCheckout;
-import org.eclipse.jgit.lib.EmptyProgressMonitor;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ProgressMonitor;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.RepositoryBuilder;
-import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.transport.FetchResult;
-import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.RemoteConfig;
-import org.eclipse.jgit.transport.TagOpt;
-import org.eclipse.jgit.transport.Transport;
-import org.eclipse.jgit.transport.URIish;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.transport.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +60,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   private final double lazyPullPeriod;
   private long lastTouch = 0;
   private long lastFetch = 0;
-  
+
   /**
    * Instantiates a new Git repo file system.
    *
@@ -103,7 +91,9 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     logger.debug("Temp Git Dir: " + getGitDir().getAbsolutePath());
     this.repository = new RepositoryBuilder().setWorkTree(getGitDir()).build();
     if (!getGitDir().exists()) {
-      if (!getGitDir().mkdirs()) { throw new RuntimeException(getGitDir().getAbsolutePath()); }
+      if (!getGitDir().mkdirs()) {
+        throw new RuntimeException(getGitDir().getAbsolutePath());
+      }
       getRepository().create(false);
     }
     this.remoteConfig = getRemoteConfig(sourceUrl, getRepository().getConfig());
@@ -112,12 +102,12 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     this.univeralBase = new URI(sourceUrl.toString()).resolve(getParsedPath().getRepoBranch() + "/");
     logger.debug("Local Base: " + localBase());
     logger.debug("Universal Base: " + gitBase());
-    
+
     this.innerFS = new LocalRepoFileSystem();
     getInnerFS().setWorkingDirectory(new Path(getGitDir().getAbsolutePath()));
     getInnerFS().setConf(parent.getConf());
   }
-  
+
   /**
    * To local path path.
    *
@@ -129,7 +119,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     if (null == path) return null;
     return new Path(toLocalUrl(path.toUri()));
   }
-  
+
   /**
    * To git path path.
    *
@@ -146,7 +136,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
       throw new RuntimeException(e);
     }
   }
-  
+
   /**
    * To local url uri.
    *
@@ -160,7 +150,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     logger.debug(String.format("Converted %s to %s", path, relativized));
     return relativized;
   }
-  
+
   /**
    * To git url uri.
    *
@@ -174,7 +164,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     logger.debug(String.format("Converted %s to %s", path, relativized));
     return relativized;
   }
-  
+
   /**
    * Pull.
    *
@@ -185,9 +175,9 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     CharSequence branch = getParsedPath().getRepoBranch();
     Collection<Ref> fetch = fetch(getRepository(), getRemoteConfig(), branch);
     checkout(getRepository(), fetch.stream().filter(x -> x.getName().equals("refs/heads/" + branch)).findAny()
-      .orElseGet(() -> fetch.stream().filter(x -> x.getName().equals("HEAD")).findAny().get()));
+        .orElseGet(() -> fetch.stream().filter(x -> x.getName().equals("HEAD")).findAny().get()));
   }
-  
+
   private boolean checkout(final Repository repository, final Ref tagName) throws IOException {
     if (tagName == null) return false;
     final RevCommit commit;
@@ -206,7 +196,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     logger.debug(String.format("Checked out %s: %s", tagName.getObjectId(), checkout));
     return checkout;
   }
-  
+
   private Collection<Ref> fetch(final Repository repository, final RemoteConfig remoteConfig, final CharSequence repoBranch) {
     try (Transport transport = Transport.open(repository, remoteConfig)) {
       configure(transport);
@@ -215,9 +205,10 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
       transport.setDryRun(false);
       transport.setTagOpt(TagOpt.FETCH_TAGS);
       transport.setFetchThin(false);
-      final ProgressMonitor monitor = new EmptyProgressMonitor() {};
+      final ProgressMonitor monitor = new EmptyProgressMonitor() {
+      };
       FetchResult result = transport.fetch(monitor, Arrays.asList(
-        new RefSpec("refs/heads/" + repoBranch)
+          new RefSpec("refs/heads/" + repoBranch)
       ));
       logger.debug(String.format("Fetched %s: %s", result.getURI(), result.getMessages()));
       result.getAdvertisedRefs().stream().forEach(ref -> {
@@ -228,7 +219,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
       throw new RuntimeException(e);
     }
   }
-  
+
   private void configure(final Transport transport) {
     String username = getProperty("fs.jgit.auth.user", "").toString();
     if (!username.isEmpty()) {
@@ -237,7 +228,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
       transport.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password));
     }
   }
-  
+
   @Nonnull
   private RemoteConfig getRemoteConfig(final URIish uri, final StoredConfig config) throws URISyntaxException, IOException {
     RemoteConfig remote = new RemoteConfig(config, "origin");
@@ -247,22 +238,22 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     config.save();
     return remote;
   }
-  
+
   @Override
   public URI getUri() {
     return gitBase();
   }
-  
+
   @Override
   public FSDataInputStream open(final Path f, final int bufferSize) throws IOException {
     return getInnerFS().open(toLocalPath(f), bufferSize);
   }
-  
+
   @Override
   public FileStatus[] listStatus(final Path f) throws IOException {
     return Arrays.stream(getInnerFS().listStatus(toLocalPath(f))).map(this::filter).toArray(i -> new FileStatus[i]);
   }
-  
+
   /**
    * Filter file status.
    *
@@ -278,22 +269,22 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     }
     return newObj;
   }
-  
+
   @Override
   public Path getWorkingDirectory() {
     return new Path(gitBase());
   }
-  
+
   @Override
   public void setWorkingDirectory(final Path new_dir) {
     throw new RuntimeException("Static Filesystem");
   }
-  
+
   @Override
   public FileStatus getFileStatus(final Path f) throws IOException {
     return getInnerFS().getFileStatus(toLocalPath(f));
   }
-  
+
   /**
    * Touch.
    */
@@ -305,7 +296,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
       throw new RuntimeException(e);
     }
   }
-  
+
   /**
    * Seconds since fetch double.
    *
@@ -315,7 +306,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     final long now = System.currentTimeMillis();
     return (now - this.getLastFetch()) / 1e3;
   }
-  
+
   /**
    * Seconds since touch double.
    *
@@ -325,7 +316,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     final long now = System.currentTimeMillis();
     return (now - this.getLastTouch()) / 1e3;
   }
-  
+
   /**
    * Gets git dir.
    *
@@ -334,7 +325,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public File getGitDir() {
     return gitDir;
   }
-  
+
   /**
    * Gets repository.
    *
@@ -343,7 +334,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public Repository getRepository() {
     return repository;
   }
-  
+
   /**
    * Gets remote config.
    *
@@ -352,7 +343,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public RemoteConfig getRemoteConfig() {
     return remoteConfig;
   }
-  
+
   /**
    * Gets parsed path.
    *
@@ -361,7 +352,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public ParsePath getParsedPath() {
     return parsedPath;
   }
-  
+
   /**
    * Gets inner fs.
    *
@@ -370,7 +361,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public RawLocalFileSystem getInnerFS() {
     return innerFS;
   }
-  
+
   /**
    * Local base uri.
    *
@@ -379,7 +370,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public URI localBase() {
     return localBase;
   }
-  
+
   /**
    * Git base uri.
    *
@@ -388,7 +379,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public URI gitBase() {
     return univeralBase;
   }
-  
+
   /**
    * Gets eager pull period.
    *
@@ -397,7 +388,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public double getEagerPullPeriod() {
     return eagerPullPeriod;
   }
-  
+
   /**
    * Gets last touch.
    *
@@ -406,7 +397,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public long getLastTouch() {
     return lastTouch;
   }
-  
+
   /**
    * Gets last fetch.
    *
@@ -415,7 +406,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public long getLastFetch() {
     return lastFetch;
   }
-  
+
   /**
    * Gets lazy pull period.
    *
@@ -424,7 +415,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public double getLazyPullPeriod() {
     return lazyPullPeriod;
   }
-  
+
   /**
    * Gets dismount period.
    *
@@ -433,7 +424,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public double getDismountPeriod() {
     return dismountPeriod;
   }
-  
+
   /**
    * Is dismount delete boolean.
    *
@@ -442,7 +433,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   public boolean isDismountDelete() {
     return dismountDelete;
   }
-  
+
   private class LocalRepoFileSystem extends RawLocalFileSystem {
     /**
      * Instantiates a new Local repo file system.

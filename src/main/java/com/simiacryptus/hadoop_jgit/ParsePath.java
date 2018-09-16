@@ -34,7 +34,7 @@ class ParsePath {
   private String repoPath;
   private String repoBranch;
   private String filePath;
-  
+
   /**
    * Instantiates a new Parse path.
    *
@@ -44,7 +44,7 @@ class ParsePath {
     if (null == url) throw new IllegalArgumentException();
     this.url = url;
   }
-  
+
   /**
    * Gets repo path.
    *
@@ -53,7 +53,7 @@ class ParsePath {
   public CharSequence getRepoPath() {
     return repoPath;
   }
-  
+
   /**
    * Gets repo branch.
    *
@@ -62,7 +62,7 @@ class ParsePath {
   public String getRepoBranch() {
     return repoBranch;
   }
-  
+
   /**
    * Gets file path.
    *
@@ -71,7 +71,7 @@ class ParsePath {
   public CharSequence getFilePath() {
     return filePath;
   }
-  
+
   /**
    * Invoke parse path.
    *
@@ -80,7 +80,7 @@ class ParsePath {
   public ParsePath invoke() {
     assert null != gitRegex;
     assert null != url;
-    
+
     CharSequence path;
     try {
       path = new URIish(url).getPath();
@@ -92,8 +92,7 @@ class ParsePath {
       repoPath = matcher.group(1);
       repoBranch = matcher.group(2);
       filePath = matcher.group(3);
-    }
-    else {
+    } else {
       repoPath = "";
       repoBranch = "master";
       filePath = "";
