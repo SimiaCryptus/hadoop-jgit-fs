@@ -36,7 +36,7 @@ public abstract class ConfigurableFileSystem extends org.apache.hadoop.fs.FileSy
       throw new RuntimeException("No config found for " + key);
     });
   }
-  
+
   /**
    * Gets property.
    *
@@ -47,7 +47,7 @@ public abstract class ConfigurableFileSystem extends org.apache.hadoop.fs.FileSy
   protected CharSequence getProperty(final String key, CharSequence defaultValue) {
     return getProperty(key, () -> defaultValue);
   }
-  
+
   /**
    * Gets property.
    *

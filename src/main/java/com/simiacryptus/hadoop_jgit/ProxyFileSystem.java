@@ -33,7 +33,7 @@ import java.io.IOException;
  */
 public abstract class ProxyFileSystem extends ConfigurableFileSystem {
   private Path workingDirectory;
-  
+
   /**
    * Route git repo file system.
    *
@@ -41,7 +41,7 @@ public abstract class ProxyFileSystem extends ConfigurableFileSystem {
    * @return the git repo file system
    */
   protected abstract GitRepoFileSystem route(Path f);
-  
+
   /**
    * Filter path.
    *
@@ -49,61 +49,60 @@ public abstract class ProxyFileSystem extends ConfigurableFileSystem {
    * @return the path
    */
   protected abstract Path filter(Path f);
-  
+
   @Override
   public FSDataInputStream open(final Path f, final int bufferSize) throws IOException {
     return route(f).open(filter(f), bufferSize);
   }
-  
+
   @Override
   public FileStatus[] listStatus(final Path f) throws IOException {
     return route(f).listStatus(filter(f));
   }
-  
+
   @Override
   public Path getWorkingDirectory() {
     return workingDirectory;
   }
-  
+
   @Override
   public void setWorkingDirectory(final Path new_dir) {
     this.workingDirectory = new_dir;
   }
-  
+
   @Override
   public FileStatus getFileStatus(final Path f) throws IOException {
     return route(f).getFileStatus(filter(f));
   }
-  
+
   @Override
   public FSDataOutputStream create(
-    final Path f,
-    final FsPermission permission,
-    final boolean overwrite,
-    final int bufferSize,
-    final short replication,
-    final long blockSize,
-    final Progressable progress
-  )
-  {
+      final Path f,
+      final FsPermission permission,
+      final boolean overwrite,
+      final int bufferSize,
+      final short replication,
+      final long blockSize,
+      final Progressable progress
+  ) {
     return route(f).create(filter(f), permission, overwrite, bufferSize, replication, blockSize, progress);
   }
-  
+
   @Override
   public FSDataOutputStream append(final Path f, final int bufferSize, final Progressable progress) {
     return route(f).append(filter(f), bufferSize, progress);
   }
-  
+
   @Override
   public boolean rename(final Path src, final Path dst) {
     return route(src).rename(filter(src), dst);
   }
-  
+
   @Override
   public boolean delete(final Path f, final boolean recursive) {
     return route(f).delete(filter(f), recursive);
   }
-  
+
   @Override
   public boolean mkdirs(final Path f, final FsPermission permission) {
     return route(f).mkdirs(filter(f), permission);
