@@ -24,12 +24,11 @@
     <parent>
         <groupId>com.simiacryptus</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.0</version>
-        <relativePath></relativePath>
+        <version>1.5.0</version>
+        <relativePath>../java-parent</relativePath>
     </parent>
 
     <artifactId>hadoop-jgit-fs</artifactId>
-    <version>1.5.0</version>
     <description>A Hadoop filesystem driver for Git</description>
 
     <properties>
@@ -43,12 +42,43 @@
         </site>
     </distributionManagement>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.simiacryptus</groupId>
+                <artifactId>java-parent</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <!-- Runtime Dependencies -->
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>4.8.0.201706111038-r</version>
             <exclusions>
                 <exclusion>
                     <groupId>log4j</groupId>
@@ -59,7 +89,6 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-            <version>2.9.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>log4j</groupId>
@@ -76,28 +105,8 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.5</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Test Dependencies -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.0.13</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>log4j-over-slf4j</artifactId>
-            <version>1.7.5</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-            <version>2.7.5</version>
             <scope>test</scope>
             <type>test-jar</type>
             <exclusions>
@@ -112,15 +121,8 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-codecommit</artifactId>
-            <version>1.11.276</version>
         </dependency>
     </dependencies>
 
