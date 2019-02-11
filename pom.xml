@@ -24,22 +24,21 @@
     <parent>
         <groupId>com.simiacryptus</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.6.0</version>
+        <version>1.6.1</version>
         <relativePath>../java-parent</relativePath>
     </parent>
 
     <artifactId>hadoop-jgit-fs</artifactId>
     <description>Hadoop Filesystem Driver for Git</description>
-    <url>https://simiacryptus.github.io/${github.project}/${github.path}</url>
+    <url>https://simiacryptus.github.io/${github.project}/</url>
 
     <properties>
         <github.project>hadoop-jgit-fs</github.project>
-        <github.path></github.path>
     </properties>
     <distributionManagement>
         <site>
             <id>github</id>
-            <url>https://simiacryptus.github.io/${github.project}/${github.path}</url>
+            <url>https://simiacryptus.github.io/${github.project}/</url>
         </site>
     </distributionManagement>
 
