@@ -30,6 +30,7 @@
 
     <artifactId>hadoop-jgit-fs</artifactId>
     <description>Hadoop Filesystem Driver for Git</description>
+    <url>https://simiacryptus.github.io/${github.project}/${github.path}</url>
 
     <properties>
         <github.project>hadoop-jgit-fs</github.project>
