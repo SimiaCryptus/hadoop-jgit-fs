@@ -29,7 +29,7 @@
     </parent>
 
     <artifactId>hadoop-jgit-fs</artifactId>
-    <description>A Hadoop filesystem driver for Git</description>
+    <description>Hadoop Filesystem Driver for Git</description>
 
     <properties>
         <github.project>hadoop-jgit-fs</github.project>
