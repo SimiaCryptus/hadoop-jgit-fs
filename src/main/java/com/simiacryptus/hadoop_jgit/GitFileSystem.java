@@ -34,27 +34,16 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
- * The type Git file system.
- */
 public class GitFileSystem extends ProxyFileSystem {
   private static final Logger logger = LoggerFactory.getLogger(GitFileSystem.class);
   private static final Map<String, GitRepoFileSystem> cache = new HashMap<>();
   private static final Map<String, ScheduledFuture<?>> pollingTasks = new HashMap<>();
   private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
 
-  /**
-   * Instantiates a new Git file system.
-   */
   public GitFileSystem() {
     statistics = new Statistics("");
   }
 
-  /**
-   * Gets stats.
-   *
-   * @return the stats
-   */
   public Statistics getStats() {
     return statistics;
   }

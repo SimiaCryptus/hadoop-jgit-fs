@@ -24,9 +24,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
-/**
- * The type Read only file system.
- */
 public abstract class ReadOnlyFileSystem extends ConfigurableFileSystem {
 
 
