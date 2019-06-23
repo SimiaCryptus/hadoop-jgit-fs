@@ -42,9 +42,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-/**
- * The type Git repo file system.
- */
 public class GitRepoFileSystem extends ReadOnlyFileSystem {
   private static final Logger logger = LoggerFactory.getLogger(GitRepoFileSystem.class);
   private final File gitDir;
@@ -61,14 +58,6 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   private long lastTouch = 0;
   private long lastFetch = 0;
 
-  /**
-   * Instantiates a new Git repo file system.
-   *
-   * @param url    the url
-   * @param parent the parent
-   * @throws IOException        the io exception
-   * @throws URISyntaxException the uri syntax exception
-   */
   public GitRepoFileSystem(String url, final GitFileSystem parent) throws IOException, URISyntaxException {
     setConf(parent.getConf());
     statistics = parent.getStats();
@@ -108,24 +97,12 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     getInnerFS().setConf(parent.getConf());
   }
 
-  /**
-   * To local path path.
-   *
-   * @param path the path
-   * @return the path
-   */
   @Nonnull
   public Path toLocalPath(final Path path) {
     if (null == path) return null;
     return new Path(toLocalUrl(path.toUri()));
   }
 
-  /**
-   * To git path path.
-   *
-   * @param path the path
-   * @return the path
-   */
   @Nonnull
   public Path toGitPath(final Path path) {
     if (null == path) return null;
@@ -137,12 +114,6 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     }
   }
 
-  /**
-   * To local url uri.
-   *
-   * @param path the path
-   * @return the uri
-   */
   @Nonnull
   public URI toLocalUrl(final URI path) {
     if (null == path) return null;
@@ -151,12 +122,6 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return relativized;
   }
 
-  /**
-   * To git url uri.
-   *
-   * @param path the path
-   * @return the uri
-   */
   @Nonnull
   public URI toGitUrl(final URI path) {
     if (null == path) return null;
@@ -165,11 +130,6 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return relativized;
   }
 
-  /**
-   * Pull.
-   *
-   * @throws IOException the io exception
-   */
   public void pull() throws IOException {
     this.lastFetch = System.currentTimeMillis();
     CharSequence branch = getParsedPath().getRepoBranch();
@@ -254,12 +214,6 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return Arrays.stream(getInnerFS().listStatus(toLocalPath(f))).map(this::filter).toArray(i -> new FileStatus[i]);
   }
 
-  /**
-   * Filter file status.
-   *
-   * @param fileStatus the file status
-   * @return the file status
-   */
   protected FileStatus filter(final FileStatus fileStatus) {
     FileStatus newObj = new FileStatus();
     newObj.setPath(toGitPath(fileStatus.getPath()));
@@ -285,9 +239,6 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return getInnerFS().getFileStatus(toLocalPath(f));
   }
 
-  /**
-   * Touch.
-   */
   public void touch() {
     this.lastTouch = System.currentTimeMillis();
     if (secondsSinceFetch() > getLazyPullPeriod()) try {
@@ -297,147 +248,69 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     }
   }
 
-  /**
-   * Seconds since fetch double.
-   *
-   * @return the double
-   */
   public double secondsSinceFetch() {
     final long now = System.currentTimeMillis();
     return (now - this.getLastFetch()) / 1e3;
   }
 
-  /**
-   * Seconds since touch double.
-   *
-   * @return the double
-   */
   public double secondsSinceTouch() {
     final long now = System.currentTimeMillis();
     return (now - this.getLastTouch()) / 1e3;
   }
 
-  /**
-   * Gets git dir.
-   *
-   * @return the git dir
-   */
   public File getGitDir() {
     return gitDir;
   }
 
-  /**
-   * Gets repository.
-   *
-   * @return the repository
-   */
   public Repository getRepository() {
     return repository;
   }
 
-  /**
-   * Gets remote config.
-   *
-   * @return the remote config
-   */
   public RemoteConfig getRemoteConfig() {
     return remoteConfig;
   }
 
-  /**
-   * Gets parsed path.
-   *
-   * @return the parsed path
-   */
   public ParsePath getParsedPath() {
     return parsedPath;
   }
 
-  /**
-   * Gets inner fs.
-   *
-   * @return the inner fs
-   */
   public RawLocalFileSystem getInnerFS() {
     return innerFS;
   }
 
-  /**
-   * Local base uri.
-   *
-   * @return the uri
-   */
   public URI localBase() {
     return localBase;
   }
 
-  /**
-   * Git base uri.
-   *
-   * @return the uri
-   */
   public URI gitBase() {
     return univeralBase;
   }
 
-  /**
-   * Gets eager pull period.
-   *
-   * @return the eager pull period
-   */
   public double getEagerPullPeriod() {
     return eagerPullPeriod;
   }
 
-  /**
-   * Gets last touch.
-   *
-   * @return the last touch
-   */
   public long getLastTouch() {
     return lastTouch;
   }
 
-  /**
-   * Gets last fetch.
-   *
-   * @return the last fetch
-   */
   public long getLastFetch() {
     return lastFetch;
   }
 
-  /**
-   * Gets lazy pull period.
-   *
-   * @return the lazy pull period
-   */
   public double getLazyPullPeriod() {
     return lazyPullPeriod;
   }
 
-  /**
-   * Gets dismount period.
-   *
-   * @return the dismount period
-   */
   public double getDismountPeriod() {
     return dismountPeriod;
   }
 
-  /**
-   * Is dismount delete boolean.
-   *
-   * @return the boolean
-   */
   public boolean isDismountDelete() {
     return dismountDelete;
   }
 
   private class LocalRepoFileSystem extends RawLocalFileSystem {
-    /**
-     * Instantiates a new Local repo file system.
-     */
     public LocalRepoFileSystem() {
       statistics = GitRepoFileSystem.this.statistics;
     }
