@@ -5,6 +5,7 @@
 *.ctxt
 *.ear
 ../.gitignore
+hadoop-jgit-fs.iml
 hs_err_pid*
 .idea/
 *.iml
