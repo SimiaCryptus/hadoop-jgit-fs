@@ -31,9 +31,15 @@ import java.io.IOException;
 public abstract class ProxyFileSystem extends ConfigurableFileSystem {
   private Path workingDirectory;
 
-  protected abstract GitRepoFileSystem route(Path f);
+  @Override
+  public Path getWorkingDirectory() {
+    return workingDirectory;
+  }
 
-  protected abstract Path filter(Path f);
+  @Override
+  public void setWorkingDirectory(final Path new_dir) {
+    this.workingDirectory = new_dir;
+  }
 
   @Override
   public FSDataInputStream open(final Path f, final int bufferSize) throws IOException {
@@ -43,16 +49,6 @@ public abstract class ProxyFileSystem extends ConfigurableFileSystem {
   @Override
   public FileStatus[] listStatus(final Path f) throws IOException {
     return route(f).listStatus(filter(f));
-  }
-
-  @Override
-  public Path getWorkingDirectory() {
-    return workingDirectory;
-  }
-
-  @Override
-  public void setWorkingDirectory(final Path new_dir) {
-    this.workingDirectory = new_dir;
   }
 
   @Override
@@ -92,4 +88,8 @@ public abstract class ProxyFileSystem extends ConfigurableFileSystem {
   public boolean mkdirs(final Path f, final FsPermission permission) {
     return route(f).mkdirs(filter(f), permission);
   }
+
+  protected abstract GitRepoFileSystem route(Path f);
+
+  protected abstract Path filter(Path f);
 }

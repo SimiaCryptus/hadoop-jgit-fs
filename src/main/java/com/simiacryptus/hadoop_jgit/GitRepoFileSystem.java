@@ -97,6 +97,65 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     getInnerFS().setConf(parent.getConf());
   }
 
+  public double getDismountPeriod() {
+    return dismountPeriod;
+  }
+
+  public double getEagerPullPeriod() {
+    return eagerPullPeriod;
+  }
+
+  public File getGitDir() {
+    return gitDir;
+  }
+
+  public RawLocalFileSystem getInnerFS() {
+    return innerFS;
+  }
+
+  public long getLastFetch() {
+    return lastFetch;
+  }
+
+  public long getLastTouch() {
+    return lastTouch;
+  }
+
+  public double getLazyPullPeriod() {
+    return lazyPullPeriod;
+  }
+
+  public ParsePath getParsedPath() {
+    return parsedPath;
+  }
+
+  public RemoteConfig getRemoteConfig() {
+    return remoteConfig;
+  }
+
+  public Repository getRepository() {
+    return repository;
+  }
+
+  @Override
+  public URI getUri() {
+    return gitBase();
+  }
+
+  @Override
+  public Path getWorkingDirectory() {
+    return new Path(gitBase());
+  }
+
+  @Override
+  public void setWorkingDirectory(final Path new_dir) {
+    throw new RuntimeException("Static Filesystem");
+  }
+
+  public boolean isDismountDelete() {
+    return dismountDelete;
+  }
+
   @Nonnull
   public Path toLocalPath(final Path path) {
     if (null == path) return null;
@@ -136,6 +195,58 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     Collection<Ref> fetch = fetch(getRepository(), getRemoteConfig(), branch);
     checkout(getRepository(), fetch.stream().filter(x -> x.getName().equals("refs/heads/" + branch)).findAny()
         .orElseGet(() -> fetch.stream().filter(x -> x.getName().equals("HEAD")).findAny().get()));
+  }
+
+  @Override
+  public FSDataInputStream open(final Path f, final int bufferSize) throws IOException {
+    return getInnerFS().open(toLocalPath(f), bufferSize);
+  }
+
+  @Override
+  public FileStatus[] listStatus(final Path f) throws IOException {
+    return Arrays.stream(getInnerFS().listStatus(toLocalPath(f))).map(this::filter).toArray(i -> new FileStatus[i]);
+  }
+
+  @Override
+  public FileStatus getFileStatus(final Path f) throws IOException {
+    return getInnerFS().getFileStatus(toLocalPath(f));
+  }
+
+  public void touch() {
+    this.lastTouch = System.currentTimeMillis();
+    if (secondsSinceFetch() > getLazyPullPeriod()) try {
+      pull();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public double secondsSinceFetch() {
+    final long now = System.currentTimeMillis();
+    return (now - this.getLastFetch()) / 1e3;
+  }
+
+  public double secondsSinceTouch() {
+    final long now = System.currentTimeMillis();
+    return (now - this.getLastTouch()) / 1e3;
+  }
+
+  public URI localBase() {
+    return localBase;
+  }
+
+  public URI gitBase() {
+    return univeralBase;
+  }
+
+  protected FileStatus filter(final FileStatus fileStatus) {
+    FileStatus newObj = new FileStatus();
+    newObj.setPath(toGitPath(fileStatus.getPath()));
+    try {
+      newObj.setSymlink(toGitPath(fileStatus.getSymlink()));
+    } catch (IOException e) {
+    }
+    return newObj;
   }
 
   private boolean checkout(final Repository repository, final Ref tagName) throws IOException {
@@ -197,117 +308,6 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     remote.update(config);
     config.save();
     return remote;
-  }
-
-  @Override
-  public URI getUri() {
-    return gitBase();
-  }
-
-  @Override
-  public FSDataInputStream open(final Path f, final int bufferSize) throws IOException {
-    return getInnerFS().open(toLocalPath(f), bufferSize);
-  }
-
-  @Override
-  public FileStatus[] listStatus(final Path f) throws IOException {
-    return Arrays.stream(getInnerFS().listStatus(toLocalPath(f))).map(this::filter).toArray(i -> new FileStatus[i]);
-  }
-
-  protected FileStatus filter(final FileStatus fileStatus) {
-    FileStatus newObj = new FileStatus();
-    newObj.setPath(toGitPath(fileStatus.getPath()));
-    try {
-      newObj.setSymlink(toGitPath(fileStatus.getSymlink()));
-    } catch (IOException e) {
-    }
-    return newObj;
-  }
-
-  @Override
-  public Path getWorkingDirectory() {
-    return new Path(gitBase());
-  }
-
-  @Override
-  public void setWorkingDirectory(final Path new_dir) {
-    throw new RuntimeException("Static Filesystem");
-  }
-
-  @Override
-  public FileStatus getFileStatus(final Path f) throws IOException {
-    return getInnerFS().getFileStatus(toLocalPath(f));
-  }
-
-  public void touch() {
-    this.lastTouch = System.currentTimeMillis();
-    if (secondsSinceFetch() > getLazyPullPeriod()) try {
-      pull();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public double secondsSinceFetch() {
-    final long now = System.currentTimeMillis();
-    return (now - this.getLastFetch()) / 1e3;
-  }
-
-  public double secondsSinceTouch() {
-    final long now = System.currentTimeMillis();
-    return (now - this.getLastTouch()) / 1e3;
-  }
-
-  public File getGitDir() {
-    return gitDir;
-  }
-
-  public Repository getRepository() {
-    return repository;
-  }
-
-  public RemoteConfig getRemoteConfig() {
-    return remoteConfig;
-  }
-
-  public ParsePath getParsedPath() {
-    return parsedPath;
-  }
-
-  public RawLocalFileSystem getInnerFS() {
-    return innerFS;
-  }
-
-  public URI localBase() {
-    return localBase;
-  }
-
-  public URI gitBase() {
-    return univeralBase;
-  }
-
-  public double getEagerPullPeriod() {
-    return eagerPullPeriod;
-  }
-
-  public long getLastTouch() {
-    return lastTouch;
-  }
-
-  public long getLastFetch() {
-    return lastFetch;
-  }
-
-  public double getLazyPullPeriod() {
-    return lazyPullPeriod;
-  }
-
-  public double getDismountPeriod() {
-    return dismountPeriod;
-  }
-
-  public boolean isDismountDelete() {
-    return dismountDelete;
   }
 
   private class LocalRepoFileSystem extends RawLocalFileSystem {

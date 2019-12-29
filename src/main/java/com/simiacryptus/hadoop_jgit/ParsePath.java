@@ -37,16 +37,16 @@ class ParsePath {
     this.url = url;
   }
 
-  public CharSequence getRepoPath() {
-    return repoPath;
+  public CharSequence getFilePath() {
+    return filePath;
   }
 
   public String getRepoBranch() {
     return repoBranch;
   }
 
-  public CharSequence getFilePath() {
-    return filePath;
+  public CharSequence getRepoPath() {
+    return repoPath;
   }
 
   public ParsePath invoke() {
