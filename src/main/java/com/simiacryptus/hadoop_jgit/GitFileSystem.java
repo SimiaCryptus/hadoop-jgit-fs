@@ -24,6 +24,7 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -48,6 +49,7 @@ public class GitFileSystem extends ProxyFileSystem {
     return statistics;
   }
 
+  @Nonnull
   @Override
   public URI getUri() {
     try {
@@ -58,7 +60,7 @@ public class GitFileSystem extends ProxyFileSystem {
   }
 
   @Override
-  protected GitRepoFileSystem route(final Path f) {
+  protected GitRepoFileSystem route(@Nonnull final Path f) {
     URI uri = f.toUri();
     ParsePath parsePath = new ParsePath(f.toString()).invoke();
     String basePath = String.format("https://%s/%s%s/", uri.getRawAuthority(), parsePath.getRepoPath(), parsePath.getRepoBranch());
@@ -91,8 +93,9 @@ public class GitFileSystem extends ProxyFileSystem {
     });
   }
 
+  @Nonnull
   @Override
-  protected Path filter(final Path f) {
+  protected Path filter(@Nonnull final Path f) {
     URI uri = f.toUri();
     return new Path("https", uri.getRawAuthority(), uri.getRawPath());
   }

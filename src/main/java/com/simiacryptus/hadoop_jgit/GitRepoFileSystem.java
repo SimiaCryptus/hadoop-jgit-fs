@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -44,12 +45,18 @@ import java.util.concurrent.TimeUnit;
 
 public class GitRepoFileSystem extends ReadOnlyFileSystem {
   private static final Logger logger = LoggerFactory.getLogger(GitRepoFileSystem.class);
+  @Nonnull
   private final File gitDir;
   private final Repository repository;
+  @Nonnull
   private final RemoteConfig remoteConfig;
+  @Nonnull
   private final ParsePath parsedPath;
+  @Nonnull
   private final RawLocalFileSystem innerFS;
+  @Nonnull
   private final URI localBase;
+  @Nonnull
   private final URI univeralBase;
   private final double eagerPullPeriod;
   private final double dismountPeriod;
@@ -58,7 +65,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   private long lastTouch = 0;
   private long lastFetch = 0;
 
-  public GitRepoFileSystem(String url, final GitFileSystem parent) throws IOException, URISyntaxException {
+  public GitRepoFileSystem(String url, @Nonnull final GitFileSystem parent) throws IOException, URISyntaxException {
     setConf(parent.getConf());
     statistics = parent.getStats();
     TimeUnit timeUnit = TimeUnit.SECONDS;
@@ -105,10 +112,12 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return eagerPullPeriod;
   }
 
+  @Nonnull
   public File getGitDir() {
     return gitDir;
   }
 
+  @Nonnull
   public RawLocalFileSystem getInnerFS() {
     return innerFS;
   }
@@ -125,10 +134,12 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return lazyPullPeriod;
   }
 
+  @Nonnull
   public ParsePath getParsedPath() {
     return parsedPath;
   }
 
+  @Nonnull
   public RemoteConfig getRemoteConfig() {
     return remoteConfig;
   }
@@ -137,11 +148,13 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return repository;
   }
 
+  @Nonnull
   @Override
   public URI getUri() {
     return gitBase();
   }
 
+  @Nonnull
   @Override
   public Path getWorkingDirectory() {
     return new Path(gitBase());
@@ -157,13 +170,13 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   }
 
   @Nonnull
-  public Path toLocalPath(final Path path) {
+  public Path toLocalPath(@Nullable final Path path) {
     if (null == path) return null;
     return new Path(toLocalUrl(path.toUri()));
   }
 
   @Nonnull
-  public Path toGitPath(final Path path) {
+  public Path toGitPath(@Nullable final Path path) {
     if (null == path) return null;
     URI uri = toGitUrl(path.toUri());
     try {
@@ -174,7 +187,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   }
 
   @Nonnull
-  public URI toLocalUrl(final URI path) {
+  public URI toLocalUrl(@Nullable final URI path) {
     if (null == path) return null;
     URI relativized = localBase().resolve(gitBase().relativize(path));
     logger.debug(String.format("Converted %s to %s", path, relativized));
@@ -182,7 +195,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   }
 
   @Nonnull
-  public URI toGitUrl(final URI path) {
+  public URI toGitUrl(@Nullable final URI path) {
     if (null == path) return null;
     URI relativized = gitBase().resolve(localBase().relativize(path));
     logger.debug(String.format("Converted %s to %s", path, relativized));
@@ -202,6 +215,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return getInnerFS().open(toLocalPath(f), bufferSize);
   }
 
+  @Nonnull
   @Override
   public FileStatus[] listStatus(final Path f) throws IOException {
     return Arrays.stream(getInnerFS().listStatus(toLocalPath(f))).map(this::filter).toArray(i -> new FileStatus[i]);
@@ -231,15 +245,18 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return (now - this.getLastTouch()) / 1e3;
   }
 
+  @Nonnull
   public URI localBase() {
     return localBase;
   }
 
+  @Nonnull
   public URI gitBase() {
     return univeralBase;
   }
 
-  protected FileStatus filter(final FileStatus fileStatus) {
+  @Nonnull
+  protected FileStatus filter(@Nonnull final FileStatus fileStatus) {
     FileStatus newObj = new FileStatus();
     newObj.setPath(toGitPath(fileStatus.getPath()));
     try {
@@ -249,11 +266,10 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return newObj;
   }
 
-  private boolean checkout(final Repository repository, final Ref tagName) throws IOException {
+  private boolean checkout(@Nonnull final Repository repository, @Nullable final Ref tagName) throws IOException {
     if (tagName == null) return false;
     final RevCommit commit;
     try (RevWalk revWalk = new RevWalk(repository)) {
-      assert revWalk != null;
       ObjectId resolve = tagName.getObjectId();
       if (resolve == null) return false;
       commit = revWalk.parseCommit(resolve);
@@ -268,7 +284,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     return checkout;
   }
 
-  private Collection<Ref> fetch(final Repository repository, final RemoteConfig remoteConfig, final CharSequence repoBranch) {
+  private Collection<Ref> fetch(final Repository repository, @Nonnull final RemoteConfig remoteConfig, final CharSequence repoBranch) {
     try (Transport transport = Transport.open(repository, remoteConfig)) {
       configure(transport);
       transport.setCheckFetchedObjects(false);
@@ -291,7 +307,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
     }
   }
 
-  private void configure(final Transport transport) {
+  private void configure(@Nonnull final Transport transport) {
     String username = getProperty("fs.jgit.auth.user", "").toString();
     if (!username.isEmpty()) {
       String password = getProperty("fs.jgit.auth.pass").toString();
@@ -301,7 +317,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   }
 
   @Nonnull
-  private RemoteConfig getRemoteConfig(final URIish uri, final StoredConfig config) throws URISyntaxException, IOException {
+  private RemoteConfig getRemoteConfig(final URIish uri, @Nonnull final StoredConfig config) throws URISyntaxException, IOException {
     RemoteConfig remote = new RemoteConfig(config, "origin");
     remote.addFetchRefSpec(new RefSpec().setForceUpdate(true).setSourceDestination("refs/heads/*", "refs/remotes/origin/*"));
     remote.addURI(uri);

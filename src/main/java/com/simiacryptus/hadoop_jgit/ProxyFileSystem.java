@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 
 public abstract class ProxyFileSystem extends ConfigurableFileSystem {
@@ -46,6 +47,7 @@ public abstract class ProxyFileSystem extends ConfigurableFileSystem {
     return route(f).open(filter(f), bufferSize);
   }
 
+  @Nonnull
   @Override
   public FileStatus[] listStatus(final Path f) throws IOException {
     return route(f).listStatus(filter(f));
@@ -56,6 +58,7 @@ public abstract class ProxyFileSystem extends ConfigurableFileSystem {
     return route(f).getFileStatus(filter(f));
   }
 
+  @Nonnull
   @Override
   public FSDataOutputStream create(
       final Path f,
@@ -69,6 +72,7 @@ public abstract class ProxyFileSystem extends ConfigurableFileSystem {
     return route(f).create(filter(f), permission, overwrite, bufferSize, replication, blockSize, progress);
   }
 
+  @Nonnull
   @Override
   public FSDataOutputStream append(final Path f, final int bufferSize, final Progressable progress) {
     return route(f).append(filter(f), bufferSize, progress);
@@ -91,5 +95,6 @@ public abstract class ProxyFileSystem extends ConfigurableFileSystem {
 
   protected abstract GitRepoFileSystem route(Path f);
 
+  @Nonnull
   protected abstract Path filter(Path f);
 }

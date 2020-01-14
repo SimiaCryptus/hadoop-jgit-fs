@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +33,7 @@ public class Test {
   protected static final Logger logger = LoggerFactory.getLogger(Test.class);
 
 
-  public static void main(String[] args) {
+  public static void main(@Nonnull String[] args) {
     //com.simiacryptus.ref.wrappers.RefSystem.setProperty("fs.jgit.auth.user")
     String pathString = args.length == 0 ? "https://git-codecommit.us-west-2.amazonaws.com/v1/repos/simiacryptus-test:/master/README.md" : args[0];
     //String pathString = args.length == 0 ? "git://github.com/SimiaCryptus/hadoop-jgit-fs.git/acharneski-patch-1/README.md" : args[0];

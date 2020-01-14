@@ -24,14 +24,18 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
+import javax.annotation.Nonnull;
+
 public abstract class ReadOnlyFileSystem extends ConfigurableFileSystem {
 
 
+  @Nonnull
   @Override
   public FSDataOutputStream create(final Path f, final FsPermission permission, final boolean overwrite, final int bufferSize, final short replication, final long blockSize, final Progressable progress) {
     throw new RuntimeException("Read-Only Filesystem");
   }
 
+  @Nonnull
   @Override
   public FSDataOutputStream append(final Path f, final int bufferSize, final Progressable progress) {
     throw new RuntimeException("Read-Only Filesystem");
