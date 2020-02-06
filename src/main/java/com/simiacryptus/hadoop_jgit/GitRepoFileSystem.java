@@ -218,7 +218,7 @@ public class GitRepoFileSystem extends ReadOnlyFileSystem {
   @Nonnull
   @Override
   public FileStatus[] listStatus(final Path f) throws IOException {
-    return Arrays.stream(getInnerFS().listStatus(toLocalPath(f))).map(this::filter).toArray(i -> new FileStatus[i]);
+    return Arrays.stream(getInnerFS().listStatus(toLocalPath(f))).map(fileStatus -> filter(fileStatus)).toArray(i -> new FileStatus[i]);
   }
 
   @Override
