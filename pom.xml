@@ -115,6 +115,7 @@
     <url>http://code.simiacrypt.us/release/${project.version}/hadoop-jgit-fs</url>
     <distributionManagement>
         <site>
+            <id>simiacryptus</id>
             <url>s3://code.simiacrypt.us/release/${project.version}/hadoop-jgit-fs</url>
         </site>
     </distributionManagement>
