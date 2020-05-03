@@ -23,9 +23,8 @@
 
     <parent>
         <groupId>com.simiacryptus</groupId>
-        <artifactId>java-parent</artifactId>
+        <artifactId>util-all</artifactId>
         <version>MINDSEYE-SNAPSHOT</version>
-        <relativePath>../../mvn-parents/java-parent</relativePath>
     </parent>
 
     <artifactId>hadoop-jgit-fs</artifactId>
